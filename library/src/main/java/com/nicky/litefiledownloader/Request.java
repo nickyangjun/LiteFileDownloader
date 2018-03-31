@@ -55,8 +55,7 @@ public final class Request {
     }
 
     String getCacheFilePath(){
-//        return getStoragePath()+getFileName() + threadNum +".cache";
-        return getStoragePath()+getFileName() +".cache";
+        return getStoragePath()+getFileName() + threadNum +".cache";
     }
 
     Request newRequest() {
