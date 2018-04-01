@@ -39,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-//        addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
-        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
+        addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
+//        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
 
         downloader = FileDownloader.createBuilder().maxThreadPerTask(4).build();
 
@@ -52,7 +52,11 @@ public class MainActivity extends AppCompatActivity {
         int id = view.getId();
         switch (id) {
             case R.id.btn_start:
-                Request request = Request.createBuilder().url(addressText.getText().toString()).build();
+                Request request = Request
+                        .createBuilder()
+                        .url(addressText.getText().toString())
+//                        .maxDownloadThreads(1)
+                        .build();
                 task = downloader.newTask(request);
                 task.enqueue(new DownloadListener() {
                     @Override
@@ -87,7 +91,13 @@ public class MainActivity extends AppCompatActivity {
                 });
                 break;
             case R.id.btn_pause:
-                task.pause();
+                if(pauseButton.getText().toString().equalsIgnoreCase("暂停")){
+                    task.pause();
+                    pauseButton.setText("继续");
+                }else {
+                    task.resume();
+                    pauseButton.setText("暂停");
+                }
                 break;
             case R.id.btn_cancel:
                 task.cancel();

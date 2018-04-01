@@ -9,11 +9,9 @@ import android.text.TextUtils;
 public final class Request {
     String reqUrl;
     int maxThreads;
-    int threadNum = 0; //下载线程编号，默认0号
-    int startIndex;   //下载文件的起点
-    int endIndex;      //下载文件的终点
     String storagePath;    //文件保存的路径
     String fileName;    //文件名称
+    Object tag;
 
     Request() {
     }
@@ -23,6 +21,7 @@ public final class Request {
         this.maxThreads = builder.maxThreads;
         this.storagePath = builder.storagePath;
         this.fileName = builder.fileName;
+        this.tag = builder.tag;
 
         if (TextUtils.isEmpty(this.fileName)) {
             int index = reqUrl.lastIndexOf("/");
@@ -52,10 +51,6 @@ public final class Request {
 
     public int maxDownloadThreads() {
         return maxThreads;
-    }
-
-    String getCacheFilePath(){
-        return getStoragePath()+getFileName() + threadNum +".cache";
     }
 
     Request newRequest() {
@@ -94,6 +89,11 @@ public final class Request {
 
         public Builder downloadFileName(String fileName) {
             this.fileName = fileName;
+            return this;
+        }
+
+        public Builder tag(Object tag){
+            this.tag = tag;
             return this;
         }
 

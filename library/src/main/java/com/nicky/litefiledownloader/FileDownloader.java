@@ -2,6 +2,8 @@ package com.nicky.litefiledownloader;
 
 import android.os.Environment;
 
+import com.nicky.litefiledownloader.dao.FileSnippetHelper;
+import com.nicky.litefiledownloader.dao.SnippetHelper;
 import com.nicky.litefiledownloader.engine.HttpEngine;
 import com.nicky.litefiledownloader.engine.OkHttpEngine;
 
@@ -28,6 +30,7 @@ public class FileDownloader {
     final String downloadFileDir;
     final int maxThreadPerTask;
     final HttpEngine engine;
+    final SnippetHelper snippetHelper;
 
     /**
      * 获取默认下载目录
@@ -43,7 +46,7 @@ public class FileDownloader {
     }
 
     public Task newTask(Request request){
-       return new RealTask(this, request, engine);
+       return new RealTask(this, engine, snippetHelper, request);
     }
 
     FileDownloader(Builder builder){
@@ -51,6 +54,7 @@ public class FileDownloader {
         downloadFileDir = builder.downloadFileDir;
         maxThreadPerTask = builder.maxThreadPerTask;
         engine = builder.engine;
+        snippetHelper = builder.snippetHelper;
     }
 
     public static class Builder{
@@ -58,12 +62,14 @@ public class FileDownloader {
         String downloadFileDir;
         int maxThreadPerTask;
         HttpEngine engine;
+        SnippetHelper snippetHelper;
 
         public Builder(){
             dispatcher = new Dispatcher();
             maxThreadPerTask = DEFAULT_MAX_THREADS;
             downloadFileDir = DEFAULT_FILE_DIR;
             engine = new OkHttpEngine();
+            snippetHelper = new FileSnippetHelper();
         }
 
         public Builder downloadFileDirectory(String pathDir){
@@ -78,6 +84,11 @@ public class FileDownloader {
 
         public Builder httpEngine(HttpEngine engine){
             this.engine = engine;
+            return this;
+        }
+
+        public Builder snippetHelper(SnippetHelper snippetHelper){
+            this.snippetHelper = snippetHelper;
             return this;
         }
 
