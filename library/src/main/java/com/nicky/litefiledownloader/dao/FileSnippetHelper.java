@@ -12,13 +12,13 @@ import java.util.List;
 
 /**
  * Created by nickyang on 2018/4/1.
- *
+ * 通过RandomAccessFile来保存各个下载分段记录
  */
 
 public class FileSnippetHelper implements SnippetHelper {
 
     @Override
-    public Snippet getSnippet(Request request, int num, int startPoint, int endPoint, int downloadedPoint) {
+    public Snippet getSnippet(Request request, int num, long startPoint, long endPoint, long downloadedPoint) {
         return new FileSnippet(request, num, startPoint, endPoint, downloadedPoint);
     }
 
@@ -29,14 +29,14 @@ public class FileSnippetHelper implements SnippetHelper {
         try {
             cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
             if (cacheFile.exists() && cacheFile.length() > 0) {// 如果文件存在
-                int counts = (int) (cacheAccessFile.length()/12); //每个snippet占12个字节
+                int counts = (int) (cacheAccessFile.length() / 24); //每个snippet占24个字节
                 cacheAccessFile.seek(0);
                 List<Snippet> snippets = new ArrayList<>(counts);
                 for (int i = 0; i < counts; i++) {
-                    int startPoint = cacheAccessFile.readInt();
-                    int endPoint = cacheAccessFile.readInt();
-                    int downloadedPoint = cacheAccessFile.readInt();
-                    snippets.add(getSnippet(request,i,startPoint,endPoint,downloadedPoint));
+                    long startPoint = cacheAccessFile.readLong();
+                    long endPoint = cacheAccessFile.readLong();
+                    long downloadedPoint = cacheAccessFile.readLong();
+                    snippets.add(getSnippet(request, i, startPoint, endPoint, downloadedPoint));
                 }
                 Util.close(cacheAccessFile);
                 return snippets;
@@ -50,9 +50,7 @@ public class FileSnippetHelper implements SnippetHelper {
 
     @Override
     public void downloadDone(int code, Request request) {
-        if(code == CANCEL || code == SUCCESS) {
-            Util.deleteFile(getCacheFilePath(request));
-        }
+        Util.deleteFile(getCacheFilePath(request));
     }
 
 
@@ -63,20 +61,20 @@ public class FileSnippetHelper implements SnippetHelper {
     private class FileSnippet implements Snippet {
         Request request;
         int num;
-        int startPoint;
-        int endPoint;
-        int downloadedPoint;
+        long startPoint;
+        long endPoint;
+        long downloadedPoint;
         RandomAccessFile cacheAccessFile;
-        int seekPoint;
-        byte point[] = new byte[4];
+        long seekPoint;
+        byte point[] = new byte[8];
 
-        FileSnippet(Request request, int num, int startPoint, int endPoint, int downloadedPoint) {
+        FileSnippet(Request request, int num, long startPoint, long endPoint, long downloadedPoint) {
             this.request = request;
             this.num = num;
             this.startPoint = startPoint;
             this.endPoint = endPoint;
             this.downloadedPoint = downloadedPoint;
-            this.seekPoint = num * 12 + 8;
+            this.seekPoint = num * 24 + 16;
         }
 
         @Override
@@ -85,38 +83,38 @@ public class FileSnippetHelper implements SnippetHelper {
         }
 
         @Override
-        public int getStartPoint() {
+        public long getStartPoint() {
             return startPoint;
         }
 
         @Override
-        public void setStartPoint(int startPoint) {
+        public void setStartPoint(long startPoint) {
             this.startPoint = startPoint;
         }
 
         @Override
-        public int getEndPoint() {
+        public long getEndPoint() {
             return endPoint;
         }
 
         @Override
-        public void setEndPoint(int endPoint) {
+        public void setEndPoint(long endPoint) {
             this.endPoint = endPoint;
         }
 
         @Override
-        public int getDownloadedPoint() {
+        public long getDownloadedPoint() {
             return downloadedPoint;
         }
 
         @Override
-        public void updateCurDownloadedPoint(int downloadedPoint) throws IOException {
+        public void updateCurDownloadedPoint(long downloadedPoint) throws IOException {
             this.downloadedPoint = downloadedPoint;
             cacheAccessFile.seek(seekPoint);
-            cacheAccessFile.write(writeInt(point, 0, downloadedPoint));
+            cacheAccessFile.write(writeLong(point, 0, downloadedPoint));
 
-            LogUtil.e(" ----> 分段下载: startPoint: " + startPoint + "  endPoint: " + endPoint + " downloadedPoint: " +
-                    downloadedPoint);
+//            LogUtil.e(" ----> 分段下载: startPoint: " + startPoint + "  endPoint: " + endPoint + " downloadedPoint: " +
+//                    downloadedPoint);
             if (downloadedPoint == endPoint) { //分段下载完成
                 Util.close(cacheAccessFile);
                 LogUtil.e(" ----> 分段下载完成: startPoint: " + startPoint + "  endPoint: " + endPoint);
@@ -138,25 +136,29 @@ public class FileSnippetHelper implements SnippetHelper {
 
         @Override
         public void serializeToLocal() throws IOException {
-            if(cacheAccessFile == null) {
+            if (cacheAccessFile == null) {
                 cacheAccessFile = new RandomAccessFile(getCacheFilePath(request), "rwd");
             }
 
             //定位到自己的位置
-            cacheAccessFile.seek(num * 12);
+            cacheAccessFile.seek(num * 24);
 
-            byte data[] = new byte[12];
-            writeInt(data, 0, startPoint);
-            writeInt(data, 4, endPoint);
-            writeInt(data, 8, downloadedPoint);
+            byte data[] = new byte[24];
+            writeLong(data, 0, startPoint);
+            writeLong(data, 8, endPoint);
+            writeLong(data, 16, downloadedPoint);
             cacheAccessFile.write(data);
         }
 
-        private byte[] writeInt(byte[] bytes, int i, int data) {
-            bytes[i] = (byte) ((data >>> 24) & 0xFF);
-            bytes[i + 1] = (byte) ((data >>> 16) & 0xFF);
-            bytes[i + 2] = (byte) ((data >>> 8) & 0xFF);
-            bytes[i + 3] = (byte) (data & 0xFF);
+        private byte[] writeLong(byte[] bytes, int i, long data) {
+            bytes[i] = (byte) ((data >>> 56) & 0xFF);
+            bytes[i + 1] = (byte) ((data >>> 48) & 0xFF);
+            bytes[i + 2] = (byte) ((data >>> 40) & 0xFF);
+            bytes[i + 3] = (byte) ((data >>> 32) & 0xFF);
+            bytes[i + 4] = (byte) ((data >>> 24) & 0xFF);
+            bytes[i + 5] = (byte) ((data >>> 16) & 0xFF);
+            bytes[i + 6] = (byte) ((data >>> 8) & 0xFF);
+            bytes[i + 7] = (byte) (data & 0xFF);
             return bytes;
         }
     }

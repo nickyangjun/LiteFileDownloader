@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 /**
  * Created by nickyang on 2018/3/29.
+ *
  */
 
 public final class Request {
@@ -12,6 +13,8 @@ public final class Request {
     String storagePath;    //文件保存的路径
     String fileName;    //文件名称
     Object tag;
+    int progressRate;  //进度更新频率，毫秒
+    volatile int code = -1;  //当前状态
 
     Request() {
     }
@@ -22,6 +25,7 @@ public final class Request {
         this.storagePath = builder.storagePath;
         this.fileName = builder.fileName;
         this.tag = builder.tag;
+        this.progressRate = builder.progressRate;
 
         if (TextUtils.isEmpty(this.fileName)) {
             int index = reqUrl.lastIndexOf("/");
@@ -53,6 +57,10 @@ public final class Request {
         return maxThreads;
     }
 
+    public int getProgressRate() {
+        return progressRate;
+    }
+
     Request newRequest() {
         Request request = new Request();
         request.reqUrl = reqUrl;
@@ -67,6 +75,7 @@ public final class Request {
         int maxThreads;
         String storagePath; //文件保存的路径
         String fileName;    //文件名称
+        int progressRate;
         Object tag;
 
         public Builder() {
@@ -89,6 +98,11 @@ public final class Request {
 
         public Builder downloadFileName(String fileName) {
             this.fileName = fileName;
+            return this;
+        }
+
+        public Builder progressRate(int progressRate){
+            this.progressRate = progressRate;
             return this;
         }
 

@@ -1,5 +1,9 @@
 package com.nicky.litefiledownloader;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
+import android.os.Process;
 import android.support.annotation.Nullable;
 
 import com.nicky.litefiledownloader.internal.Util;
@@ -38,7 +42,13 @@ public final class Dispatcher {
         this.executorService = executorService;
     }
 
+    private HandlerThread mThread;
+    private Handler mAsyncHandler;
+
     public Dispatcher() {
+        mThread = new HandlerThread("DispatcherCallback", Process.THREAD_PRIORITY_BACKGROUND);
+        mThread.start();
+        mAsyncHandler = new Handler(new AsyncThreadCallback());
     }
 
     public synchronized ExecutorService executorService() {
@@ -124,4 +134,28 @@ public final class Dispatcher {
     public synchronized int runningCallsCount() {
         return runningAsyncCalls.size() + runningSyncCalls.size();
     }
+
+    private class AsyncThreadCallback implements Handler.Callback {
+
+        @Override
+        public boolean handleMessage(Message msg) {
+            RealTask realTask = (RealTask) msg.obj;
+            realTask.handleCallback(msg.what);
+            return true;
+        }
+    }
+
+    void postCallback(int code, RealTask realTask){
+        mAsyncHandler.obtainMessage(code,realTask).sendToTarget();
+    }
+
+    void postDelayCallback(int delayMillis, int code, RealTask realTask){
+        Message message = mAsyncHandler.obtainMessage(code,realTask);
+        mAsyncHandler.sendMessageDelayed(message, delayMillis);
+    }
+
+    void removeCallback(int code, RealTask realTask){
+        mAsyncHandler.removeMessages(code, realTask);
+    }
+
 }

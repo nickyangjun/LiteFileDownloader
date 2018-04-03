@@ -16,6 +16,7 @@ import java.io.File;
 public class FileDownloader {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final String DEFAULT_FILE_DIR;  //默认下载目录
+    private static final int DEFAULT_PROGRESS_RATE = 300; //默认300MS更新一次进度
 
     static {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) || !Environment.isExternalStorageRemovable()) {
@@ -29,6 +30,7 @@ public class FileDownloader {
     final Dispatcher dispatcher;
     final String downloadFileDir;
     final int maxThreadPerTask;
+    final int progressRate;
     final HttpEngine engine;
     final SnippetHelper snippetHelper;
 
@@ -55,12 +57,14 @@ public class FileDownloader {
         maxThreadPerTask = builder.maxThreadPerTask;
         engine = builder.engine;
         snippetHelper = builder.snippetHelper;
+        progressRate = builder.progressRate;
     }
 
     public static class Builder{
         Dispatcher dispatcher;
         String downloadFileDir;
         int maxThreadPerTask;
+        int progressRate;
         HttpEngine engine;
         SnippetHelper snippetHelper;
 
@@ -68,6 +72,7 @@ public class FileDownloader {
             dispatcher = new Dispatcher();
             maxThreadPerTask = DEFAULT_MAX_THREADS;
             downloadFileDir = DEFAULT_FILE_DIR;
+            progressRate = DEFAULT_PROGRESS_RATE;
             engine = new OkHttpEngine();
             snippetHelper = new FileSnippetHelper();
         }
@@ -89,6 +94,11 @@ public class FileDownloader {
 
         public Builder snippetHelper(SnippetHelper snippetHelper){
             this.snippetHelper = snippetHelper;
+            return this;
+        }
+
+        public Builder progressRate(int progressRate){
+            this.progressRate = progressRate;
             return this;
         }
 

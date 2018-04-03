@@ -20,12 +20,6 @@ public interface Task {
     void enqueue(DownloadListener listener);
 
     /**
-     * 是否已经执行完毕
-     * @return
-     */
-    boolean isExecuteDone();
-
-    /**
      * 是否正在执行
      * @return
      */

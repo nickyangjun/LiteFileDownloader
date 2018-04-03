@@ -8,9 +8,11 @@ public interface DownloadListener {
 
     void onStart();
 
-    void onProgress(float progress);
+    void onProgress(int progress);
 
     void onPause();
+
+    void onRestart();
 
     void onFinished();
 

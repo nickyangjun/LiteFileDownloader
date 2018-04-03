@@ -9,11 +9,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import com.nicky.litefiledownloader.DownloadListener;
 import com.nicky.litefiledownloader.FileDownloader;
 import com.nicky.litefiledownloader.Request;
 import com.nicky.litefiledownloader.Task;
+import com.nicky.litefiledownloader.internal.LogUtil;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -29,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     Button pauseButton;
     @BindView(R.id.btn_cancel)
     Button cancelButton;
+    @BindView(R.id.progressBar)
+    ProgressBar progressBar;
 
     FileDownloader downloader;
     Task task;
@@ -39,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
-//        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
+//        addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
+        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
 
         downloader = FileDownloader.createBuilder().maxThreadPerTask(4).build();
 
@@ -52,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         int id = view.getId();
         switch (id) {
             case R.id.btn_start:
+                progressBar.setMax(100);
                 Request request = Request
                         .createBuilder()
                         .url(addressText.getText().toString())
@@ -61,32 +66,50 @@ public class MainActivity extends AppCompatActivity {
                 task.enqueue(new DownloadListener() {
                     @Override
                     public void onStart() {
+                        LogUtil.i(" ---------->");
 
                     }
 
                     @Override
-                    public void onProgress(float progress) {
-
+                    public void onProgress(final int progress) {
+                        LogUtil.i(" ----------> " + progress);
+                        progressBar.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.setProgress(progress);
+                            }
+                        });
                     }
 
                     @Override
                     public void onPause() {
+                        LogUtil.i(" ---------->");
+                    }
 
+                    @Override
+                    public void onRestart() {
+                        LogUtil.i(" ---------->");
                     }
 
                     @Override
                     public void onFinished() {
-
+                        LogUtil.i(" ---------->");
                     }
 
                     @Override
                     public void onCancel() {
-
+                        progressBar.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.setProgress(0);
+                            }
+                        });
+                        LogUtil.i(" ---------->");
                     }
 
                     @Override
                     public void onFailed(Exception e) {
-
+                        LogUtil.e(" ----------> ",e);
                     }
                 });
                 break;
