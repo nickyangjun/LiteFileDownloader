@@ -1,7 +1,7 @@
 package com.nicky.litefiledownloader.engine;
 
 
-import com.nicky.litefiledownloader.Callback;
+import java.io.IOException;
 
 /**
  * Created by nickyang on 2018/3/29.
@@ -9,7 +9,7 @@ import com.nicky.litefiledownloader.Callback;
 
 public interface HttpEngine {
 
-    void getHttpReq(String url, Callback callback);
+    Response getHttpReq(String url) throws IOException;
 
-    void getHttpReq(String url, long startPosition, long endPosition, Callback callback);
+    Response getHttpReq(String url, long startPosition, long endPosition) throws IOException;
 }

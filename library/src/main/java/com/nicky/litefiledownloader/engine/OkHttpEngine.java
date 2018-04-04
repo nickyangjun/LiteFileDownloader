@@ -3,13 +3,10 @@ package com.nicky.litefiledownloader.engine;
 
 import android.support.annotation.Nullable;
 
-import com.nicky.litefiledownloader.Callback;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -35,37 +32,28 @@ public class OkHttpEngine implements HttpEngine {
 
 
     @Override
-    public void getHttpReq(String url, final Callback callback) {
+    public Response getHttpReq(String url) throws IOException {
         Request request = new Request
                 .Builder()
                 .url(url)
                 .build();
-        get(request,callback);
+        return get(request);
     }
 
     @Override
-    public void getHttpReq(String url, long startPosition, long endPosition, final Callback callback) {
+    public Response getHttpReq(String url, long startPosition, long endPosition) throws IOException {
         Request request = new Request
                 .Builder()
                 .header("RANGE", "bytes=" + startPosition + "-" + endPosition)
                 .url(url)
                 .build();
-        get(request,callback);
+        return get(request);
     }
 
-    private void get(Request request, final Callback callback){
-        mOkHttpClient.newCall(request)
-                .enqueue(new okhttp3.Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-
-                    }
-
-                    @Override
-                    public void onResponse(Call call, okhttp3.Response response) throws IOException {
-                        callback.onSuccess(new HttpResponse(call, response));
-                    }
-                });
+    private Response get(Request request) throws IOException {
+        okhttp3.Call call = mOkHttpClient.newCall(request);
+        okhttp3.Response response = call.execute();
+        return new HttpResponse(call,response);
     }
 
 

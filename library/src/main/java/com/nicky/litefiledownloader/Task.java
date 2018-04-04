@@ -9,11 +9,6 @@ public interface Task {
     Request getRequest();
 
     /**
-     * 同步执行
-     */
-    void execute();
-
-    /**
      * 异步回调执行
      * @param listener
      */
