@@ -17,6 +17,7 @@ public class FileDownloader {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final String DEFAULT_FILE_DIR;  //默认下载目录
     private static final int DEFAULT_PROGRESS_RATE = 300; //默认300MS更新一次进度
+    private static final int DEFAULT_RETRY_TIMES = 2; //默认重试2次
 
     static {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) || !Environment.isExternalStorageRemovable()) {
@@ -33,6 +34,7 @@ public class FileDownloader {
     final int progressRate;
     final HttpEngine engine;
     final SnippetHelper snippetHelper;
+    final int retryTimes;
 
     /**
      * 获取默认下载目录
@@ -58,6 +60,7 @@ public class FileDownloader {
         engine = builder.engine;
         snippetHelper = builder.snippetHelper;
         progressRate = builder.progressRate;
+        retryTimes = builder.retryTimes;
     }
 
     public static class Builder{
@@ -67,6 +70,7 @@ public class FileDownloader {
         int progressRate;
         HttpEngine engine;
         SnippetHelper snippetHelper;
+        int retryTimes;
 
         public Builder(){
             dispatcher = new Dispatcher();
@@ -75,6 +79,7 @@ public class FileDownloader {
             progressRate = DEFAULT_PROGRESS_RATE;
             engine = new OkHttpEngine();
             snippetHelper = new FileSnippetHelper();
+            retryTimes = DEFAULT_RETRY_TIMES;
         }
 
         public Builder downloadFileDirectory(String pathDir){
@@ -99,6 +104,11 @@ public class FileDownloader {
 
         public Builder progressRate(int progressRate){
             this.progressRate = progressRate;
+            return this;
+        }
+
+        public Builder retryTimes(int retryTimes){
+            this.retryTimes = retryTimes;
             return this;
         }
 

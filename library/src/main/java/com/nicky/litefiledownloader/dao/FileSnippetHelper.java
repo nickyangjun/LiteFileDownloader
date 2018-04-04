@@ -161,5 +161,10 @@ public class FileSnippetHelper implements SnippetHelper {
             bytes[i + 7] = (byte) (data & 0xFF);
             return bytes;
         }
+
+        @Override
+        public String toString() {
+            return "req: "+request.getReqUrl() + " NO:"+num+" start:"+startPoint+" end:"+endPoint+" cur:"+downloadedPoint;
+        }
     }
 }

@@ -13,8 +13,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,7 +46,7 @@ final class RealTask implements Task {
     private AtomicInteger taskCounts = new AtomicInteger(0); //总的任务数
     private AtomicInteger pauseCounts = new AtomicInteger(0); //暂停的任务数
     private List<AsyncTask> asyncTaskList;
-    private List<SnippetHelper.Snippet> asyncSnippetList;
+    private Map<Integer,SnippetHelper.Snippet> asyncSnippetList;
     private Exception exceptionResult;
     private long fileLength;
 
@@ -73,9 +75,13 @@ final class RealTask implements Task {
             originalRequest.progressRate = client.progressRate;
         }
 
+        if(originalRequest.getRetryTimes() == -1){
+            originalRequest.retryTimes = client.retryTimes;
+        }
+
         tempFileName = new File(originalRequest.getStoragePath() + originalRequest.getFileName() + ".tmp");
         asyncTaskList = new ArrayList<>();
-        asyncSnippetList = Collections.synchronizedList(new ArrayList<SnippetHelper.Snippet>());
+        asyncSnippetList = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -92,8 +98,8 @@ final class RealTask implements Task {
         }
         if (!Util.isFileExist(originalRequest.getStoragePath())) {
             if (!Util.createDir(originalRequest.getStoragePath())) {
-                Exception exception = new SecurityException(" unable to create download storage dir: " + originalRequest.getStoragePath());
-                postFailCallback(exception);
+                exceptionResult= new SecurityException(" unable to create download storage dir: " + originalRequest.getStoragePath());
+                postCallback(FAIL);
                 return;
             }
         }
@@ -112,7 +118,8 @@ final class RealTask implements Task {
             case PROGRESS:
                 int progress = 0;
                 long download = 0;
-                for (SnippetHelper.Snippet snippet : asyncSnippetList) {
+                Collection<SnippetHelper.Snippet> collection = asyncSnippetList.values();
+                for (SnippetHelper.Snippet snippet : collection) {
                     download += (snippet.getDownloadedPoint() - snippet.getStartPoint());
                 }
                 if (fileLength > 0) {
@@ -199,9 +206,21 @@ final class RealTask implements Task {
         }
     }
 
-    private void postFailCallback(Exception e){
-        cancel();
-        postCallback(FAIL);
+    private void postFailCallback(Exception e, AsyncTask asyncTask){
+        LogUtil.e(e.getMessage() + " " + asyncTask.snippet.toString() + " retryTimes:"+asyncTask.retryTimes + " ");
+        if(asyncTask.retryTimes < originalRequest.getRetryTimes()){ //重试
+            asyncTask.retryTimes++;
+            client.dispatcher().enqueue(asyncTask);
+            return;
+        }
+
+        if(exceptionResult != null) return; //异常只回调一次
+        synchronized (this) {
+            if(exceptionResult != null) return;
+            exceptionResult = e;
+            cancel();
+            postCallback(FAIL);
+        }
     }
 
     private void postDelayCallback(int delayMillis, int code) {
@@ -219,6 +238,7 @@ final class RealTask implements Task {
     final class AsyncTask extends NamedRunnable {
         private Request request;
         private SnippetHelper.Snippet snippet;
+        int retryTimes;
 
         AsyncTask(Request request, SnippetHelper.Snippet snippet) {
             super("FileDownloader %s", request.getReqUrl());
@@ -249,17 +269,17 @@ final class RealTask implements Task {
                     response = engine.getHttpReq(request.getReqUrl(), snippet.getDownloadedPoint(), snippet.getEndPoint());
                 } else {
                     snippet = snippetHelper.getSnippet(request, 0, 0, 0, 0);
-                    asyncSnippetList.add(snippet);
+                    asyncSnippetList.put(snippet.getNum(), snippet);
                     response = engine.getHttpReq(request.getReqUrl());
                 }
 
                 if(response == null){
-                    postFailCallback(new IllegalStateException("request failed"));
+                    postFailCallback(new IllegalStateException("request failed"),this);
                     return;
                 }
 
                 if (response.code() != 206 && response.code() != 200) {// 206：请求部分资源成功码，表示服务器支持断点续传
-                    postFailCallback(new IllegalStateException("request " + response.code() + " failed"));
+                    postFailCallback(new IllegalStateException("request " + response.code() + " failed"),this);
                     return;
                 }
                 if (snippet.getEndPoint() == 0) { //代表第一个请求,并且此时还没有取到文件长度，则处理http头部
@@ -295,7 +315,7 @@ final class RealTask implements Task {
                     total += length;
                     curReadIndex = snippet.getDownloadedPoint() + length;
 
-                    //LogUtil.e(" -----> NO:" + snippet.getNum() + " curIndex " + curReadIndex + " endPoint: "+snippet.getEndPoint());
+//                    LogUtil.e(" -----> NO:" + snippet.getNum() + " curIndex " + curReadIndex + " endPoint: "+snippet.getEndPoint());
 
                     //将该线程最新完成下载的位置记录并保存到缓存数据文件中
                     snippet.updateCurDownloadedPoint(curReadIndex);
@@ -309,7 +329,7 @@ final class RealTask implements Task {
 
                 handleDownloadDone(result);
             } catch (Exception e) {
-                postFailCallback(e);
+                postFailCallback(e,this);
             } finally {
                 client.dispatcher().finished(this);
             }
@@ -320,7 +340,8 @@ final class RealTask implements Task {
             if (downloadSnippets != null && downloadSnippets.size() > 0) {
                 for (SnippetHelper.Snippet snippet : downloadSnippets) {
                     fileLength = snippet.getEndPoint();
-                    asyncSnippetList.add(snippet);
+                    asyncSnippetList.put(snippet.getNum(), snippet);
+                    LogUtil.i(snippet.toString());
                     if (snippet.getDownloadedPoint() < snippet.getEndPoint()) {
                         if(this.snippet == null){
                             this.snippet = snippet;
@@ -372,7 +393,7 @@ final class RealTask implements Task {
                     }
 
                     SnippetHelper.Snippet snippet = snippetHelper.getSnippet(originalRequest, thread, startIndex, endIndex, startIndex);
-                    asyncSnippetList.add(snippet);
+                    asyncSnippetList.put(snippet.getNum(), snippet);
                     snippet.serializeToLocal();
                     realEnqueue(originalRequest, snippet);
                 }

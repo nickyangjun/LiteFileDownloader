@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 public final class Dispatcher {
-    private int maxRequests = 5;
+    private int maxRequests = 24;
     private @Nullable
     Runnable idleCallback;
 

@@ -14,6 +14,7 @@ public final class Request {
     String fileName;    //文件名称
     Object tag;
     int progressRate;  //进度更新频率，毫秒
+    int retryTimes = -1;
     volatile int code = -1;  //当前状态
 
     Request() {
@@ -26,6 +27,7 @@ public final class Request {
         this.fileName = builder.fileName;
         this.tag = builder.tag;
         this.progressRate = builder.progressRate;
+        this.retryTimes = builder.retryTimes;
 
         if (TextUtils.isEmpty(this.fileName)) {
             int index = reqUrl.lastIndexOf("/");
@@ -61,12 +63,18 @@ public final class Request {
         return progressRate;
     }
 
+    public int getRetryTimes() {
+        return retryTimes;
+    }
+
     Request newRequest() {
         Request request = new Request();
         request.reqUrl = reqUrl;
         request.maxThreads = maxThreads;
         request.storagePath = storagePath;
         request.fileName = fileName;
+        request.progressRate = progressRate;
+        request.retryTimes = retryTimes;
         return request;
     }
 
@@ -76,6 +84,7 @@ public final class Request {
         String storagePath; //文件保存的路径
         String fileName;    //文件名称
         int progressRate;
+        int retryTimes = -1;
         Object tag;
 
         public Builder() {
@@ -103,6 +112,11 @@ public final class Request {
 
         public Builder progressRate(int progressRate){
             this.progressRate = progressRate;
+            return this;
+        }
+
+        public Builder retryTimes(int retryTimes){
+            this.retryTimes = retryTimes;
             return this;
         }
 
