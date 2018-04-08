@@ -3,6 +3,7 @@ package com.nicky.litefiledownloader.dao;
 import com.nicky.litefiledownloader.Request;
 import com.nicky.litefiledownloader.internal.LogUtil;
 import com.nicky.litefiledownloader.internal.Util;
+import com.nicky.litefiledownloader.internal.binary.MD5Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,8 @@ public class FileSnippetHelper implements SnippetHelper {
     @Override
     public List<Snippet> getDownloadedSnippets(Request request) {
         final File cacheFile = new File(getCacheFilePath(request));
+        if(!cacheFile.exists()) return null;
+
         final RandomAccessFile cacheAccessFile;
         try {
             cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
@@ -55,7 +58,8 @@ public class FileSnippetHelper implements SnippetHelper {
 
 
     private String getCacheFilePath(Request request) {
-        return request.getStoragePath() + request.getFileName() + ".cache";
+        String cacheMD5 = MD5Utils.md5Hex(request.getReqUrl()+".cache");
+        return request.getStoragePath() + cacheMD5;
     }
 
     private class FileSnippet implements Snippet {

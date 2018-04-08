@@ -33,7 +33,7 @@ import butterknife.OnClick;
 public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.et_addr)
-    EditText addressText;
+    TextView addressText;
     @BindView(R.id.btn_start)
     Button startButton;
     @BindView(R.id.btn_pause)
@@ -66,7 +66,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView(){
-        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
+        addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
+//        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
+//        addressText.setText("http://download.chinaunix.net/down.php?id=10608&ResourceID=5267&site=1");
+//        addressText.setText("https://gw.alipayobjects.com/os/rmsportal/cTiZiJcYfqAncwCPxKob.zip");
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new DownloadAdapter());
@@ -81,12 +84,13 @@ public class MainActivity extends AppCompatActivity {
                 Request request = Request
                         .createBuilder()
                         .url(addressText.getText().toString())
-//                        .maxDownloadThreads(1)
+//                        .maxDownloadThreads(2)
                         .build();
                 task = downloader.newTask(request);
                 task.enqueue(new FileDownloadListener(progressBar));
                 break;
             case R.id.btn_pause:
+                if(task == null) return;
                 if(pauseButton.getText().toString().equalsIgnoreCase("暂停")){
                     task.pause();
                     pauseButton.setText("继续");
@@ -112,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onStart() {
-
+            LogUtil.e("--------> onStart");
         }
 
         @Override
@@ -127,12 +131,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onPause() {
-
+            LogUtil.e("--------> onPause");
         }
 
         @Override
         public void onRestart() {
-
+            LogUtil.e("--------> onRestart");
         }
 
         @Override
@@ -148,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onCancel() {
+            LogUtil.e("--------> onCancel");
             progressBar.post(new Runnable() {
                 @Override
                 public void run() {
@@ -188,8 +193,16 @@ public class MainActivity extends AppCompatActivity {
             holder.startBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    task.enqueue(new FileDownloadListener(holder.progressBar));
-                    holder.startBtn.setText("暂停");
+                    if(holder.startBtn.getText().equals("开始")){
+                        task.enqueue(new FileDownloadListener(holder.progressBar));
+                        holder.startBtn.setText("暂停");
+                    }else if(holder.startBtn.getText().equals("暂停")){
+                        task.pause();
+                        holder.startBtn.setText("继续");
+                    }else {
+                        task.resume();
+                        holder.startBtn.setText("暂停");
+                    }
                 }
             });
 

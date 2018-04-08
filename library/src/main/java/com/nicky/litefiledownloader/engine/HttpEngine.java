@@ -9,7 +9,8 @@ import java.io.IOException;
 
 public interface HttpEngine {
 
-    Response getHttpReq(String url) throws IOException;
+    Call getHttpReq(String url) throws IOException;
 
-    Response getHttpReq(String url, long startPosition, long endPosition) throws IOException;
+    Call getHttpReq(String url, long startPosition, long endPosition) throws IOException;
+
 }

@@ -1,7 +1,5 @@
 package com.nicky.litefiledownloader;
 
-import android.text.TextUtils;
-
 /**
  * Created by nickyang on 2018/3/29.
  *
@@ -16,6 +14,7 @@ public final class Request {
     int progressRate;  //进度更新频率，毫秒
     int retryTimes = -1;
     volatile int code = -1;  //当前状态
+    String contentMd5; //下载内容的MD5码验证
 
     Request() {
     }
@@ -28,15 +27,6 @@ public final class Request {
         this.tag = builder.tag;
         this.progressRate = builder.progressRate;
         this.retryTimes = builder.retryTimes;
-
-        if (TextUtils.isEmpty(this.fileName)) {
-            int index = reqUrl.lastIndexOf("/");
-            if (index > -1) {
-                fileName = reqUrl.substring(index+1);
-            }else {
-                fileName = reqUrl;
-            }
-        }
     }
 
     public void setReqUrl(String url) {
@@ -53,6 +43,10 @@ public final class Request {
 
     public String getFileName() {
         return fileName;
+    }
+
+    void setFileName(String name){
+        fileName = name;
     }
 
     public int maxDownloadThreads() {

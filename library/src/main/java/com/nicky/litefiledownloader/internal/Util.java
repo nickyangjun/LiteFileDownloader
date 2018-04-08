@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 
@@ -13,6 +14,32 @@ import java.util.concurrent.ThreadFactory;
  */
 
 public class Util {
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
+    public static final Charset US_ASCII = Charset.forName("US-ASCII");
+
+    public static String newStringUtf8(final byte[] bytes) {
+        return newString(bytes, UTF_8);
+    }
+
+    private static String newString(final byte[] bytes, final Charset charset) {
+        return bytes == null ? null : new String(bytes, charset);
+    }
+
+    public static byte[] getBytesUtf8(final String string) {
+        return getBytes(string, UTF_8);
+    }
+
+    private static byte[] getBytes(final String string, final Charset charset) {
+        if (string == null) {
+            return null;
+        }
+        return string.getBytes(charset);
+    }
+
+    public static String newStringUsAscii(final byte[] bytes) {
+        return newString(bytes, US_ASCII);
+    }
+
 
     /** Returns a {@link Locale#US} formatted {@link String}. */
     public static String format(String format, Object... args) {
