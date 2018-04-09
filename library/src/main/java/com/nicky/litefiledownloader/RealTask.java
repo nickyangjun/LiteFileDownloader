@@ -32,6 +32,7 @@ import okhttp3.internal.NamedRunnable;
 
 /**
  * Created by nickyang on 2018/3/29.
+ *
  */
 
 final class RealTask implements Task {
@@ -42,13 +43,13 @@ final class RealTask implements Task {
     final static int RESTART = 4;   //重新启动下载
     final static int FAIL = 5;   //下载失败
     final static int PROGRESS = 6;   //下载进度更新
-    final static int RETRYING = 7;   //下载进度更新
+    private final static int RETRYING = 7;   //下载进度更新
 
-    final long MIN_PAGE_BYTES = 20 * 1024; //大于1M才开始断点分页下载
-    final FileDownloader client;
-    final HttpEngine engine;
-    final SnippetHelper snippetHelper;
-    final Request originalRequest;
+    private static final long MIN_PAGE_BYTES = 32 * 1024; //大于32K才开始断点分页下载
+    private final FileDownloader client;
+    private final HttpEngine engine;
+    private final SnippetHelper snippetHelper;
+    private final Request originalRequest;
 
     private File tempFileName;  //下载的临时文件
     private DownloadListener downloadListener; //用户设置的文件下载进度回调
@@ -58,6 +59,9 @@ final class RealTask implements Task {
     private Exception exceptionResult;
     private long fileLength;
 
+    //回调执行线程
+    private int callbackThreadMode = 0;
+
     // 是否被执行过，被执行过，再次执行会抛出异常
     private boolean executed = false;
     //是否正在执行
@@ -65,7 +69,7 @@ final class RealTask implements Task {
     private volatile boolean canceled;
     private volatile boolean paused;
 
-    public RealTask(FileDownloader client, HttpEngine engine, SnippetHelper snippetHelper, Request originalRequest) {
+    RealTask(FileDownloader client, HttpEngine engine, SnippetHelper snippetHelper, Request originalRequest) {
         this.client = client;
         this.engine = engine;
         this.snippetHelper = snippetHelper;
@@ -98,23 +102,6 @@ final class RealTask implements Task {
         return originalRequest;
     }
 
-    @Override
-    public void enqueue(DownloadListener listener) {
-        downloadListener = listener;
-        synchronized (this) {
-            if (executed) throw new IllegalStateException("Already Executed");
-            executed = true;
-        }
-        if (!Util.isFileExist(originalRequest.getStoragePath())) {
-            if (!Util.createDir(originalRequest.getStoragePath())) {
-                exceptionResult= new SecurityException(" unable to create download storage dir: " + originalRequest.getStoragePath());
-                postCallback(FAIL);
-                return;
-            }
-        }
-        realEnqueue(originalRequest,null);
-    }
-
     private void realEnqueue(Request request, SnippetHelper.Snippet snippet) {
         AsyncTask asyncTask = new AsyncTask(request, snippet);
         asyncTaskList.add(asyncTask);
@@ -130,46 +117,29 @@ final class RealTask implements Task {
         }
     }
 
-    void handleCallback(int code) {
-        switch (code) {
-            case PROGRESS:
-                int progress = 0;
-                long download = 0;
-                Collection<SnippetHelper.Snippet> collection = asyncSnippetList.values();
-                for (SnippetHelper.Snippet snippet : collection) {
-                    download += (snippet.getDownloadedPoint() - snippet.getStartPoint());
-                }
-                if (fileLength > 0) {
-                    progress = (int) ((download * 100 / fileLength));
-                }
-                downloadListener.onProgress(progress);
-                if (originalRequest.code == START) {
-                    postDelayCallback(originalRequest.getProgressRate(), PROGRESS);
-                } else {
-                    removeCallback(PROGRESS);
-                }
-                break;
-            case START:
-                downloadListener.onStart();
-                break;
-            case SUCCESS:
-                downloadListener.onFinished();
-                break;
-            case PAUSE:
-                downloadListener.onPause();
-                break;
-            case RESTART:
-                downloadListener.onRestart();
-                break;
-            case CANCEL:
-                snippetHelper.downloadDone(CANCEL, originalRequest);
-                Util.deleteFile(tempFileName);
-                downloadListener.onCancel();
-                break;
-            case FAIL:
-                downloadListener.onFailed(exceptionResult);
-                break;
+    @Override
+    public void enqueue(DownloadListener listener) {
+        downloadListener = listener;
+        synchronized (this) {
+            if (executed) throw new IllegalStateException("Already Executed");
+            executed = true;
         }
+
+        callbackThreadMode = MethodFinder.findListenerMethods(listener.getClass());
+
+        if (!Util.isFileExist(originalRequest.getStoragePath())) {
+            if (!Util.createDir(originalRequest.getStoragePath())) {
+                exceptionResult= new SecurityException(" unable to create download storage dir: " + originalRequest.getStoragePath());
+                postCallback(FAIL);
+                return;
+            }
+        }
+        realEnqueue(originalRequest,null);
+    }
+
+    @Override
+    public boolean isExecuted() {
+        return executed;
     }
 
     @Override
@@ -232,42 +202,6 @@ final class RealTask implements Task {
         return canceled;
     }
 
-    private void postCallback(int code) {
-        if (downloadListener != null) {
-            client.dispatcher().postCallback(code, this);
-        }
-    }
-
-    private void checkRetry(Exception e, AsyncTask asyncTask){
-        LogUtil.e(e.getMessage() + " " + asyncTask.snippet.toString() + " retryTimes:"+asyncTask.retryTimes + " ");
-        if(asyncTask.retryTimes < originalRequest.getRetryTimes()){ //重试
-            asyncTask.retryTimes++;
-            asyncTask.code = RETRYING;
-            client.dispatcher().enqueue(asyncTask);
-        }else {
-            asyncTask.code = FAIL;
-            originalRequest.code = FAIL;
-            exceptionResult = e;
-            if (asyncTaskList.size() > 0) {
-                for (AsyncTask task : asyncTaskList) {
-                    task.cancel();
-                }
-            }
-        }
-    }
-
-    private void postDelayCallback(int delayMillis, int code) {
-        if (downloadListener != null) {
-            client.dispatcher().postDelayCallback(delayMillis, code, this);
-        }
-    }
-
-    private void removeCallback(int code) {
-        if (downloadListener != null) {
-            client.dispatcher().removeCallback(code, this);
-        }
-    }
-
     final class AsyncTask extends NamedRunnable {
         private Request request;
         private SnippetHelper.Snippet snippet;
@@ -289,6 +223,10 @@ final class RealTask implements Task {
                     return;
                 }
 
+                if(this.snippet == null){  //检测是否有已经下载过的分段记录
+                    checkDownloadSnippets();
+                }
+
                 if (isRunning.compareAndSet(false, true)) {
                     if (request.code == PAUSE) {
                         postCallback(RESTART);
@@ -296,13 +234,10 @@ final class RealTask implements Task {
                         postCallback(START);
                     }
                     request.code = START;
-                    postCallback(PROGRESS);
+                    if(fileLength > 0) { //还没有文件长度，不回调
+                        postCallback(PROGRESS);
+                    }
                 }
-
-                if(this.snippet == null){  //检测是否有已经下载过的分段记录
-                    checkDownloadSnippets();
-                }
-
 
                 if (snippet != null) {  //下载部分文件
                     LogUtil.e(" NO:" + snippet.getNum() + " req start: " + snippet.getStartPoint()
@@ -331,7 +266,7 @@ final class RealTask implements Task {
                 tmpAccessFile = new RandomAccessFile(tempFileName, "rw");
                 tmpAccessFile.seek(snippet.getDownloadedPoint());// 文件写入的开始位置.
 
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[2048];
                 int length;
                 long curReadIndex = snippet.getDownloadedPoint();
                 snippet.startDownload();
@@ -345,12 +280,11 @@ final class RealTask implements Task {
                     tmpAccessFile.write(buffer, 0, length);
                     curReadIndex = snippet.getDownloadedPoint() + length;
 
-//                    LogUtil.e(" NO:" + snippet.getNum() + " curIndex " + curReadIndex + " endPoint: "+snippet.getEndPoint());
-
                     //将该线程最新完成下载的位置记录并保存到缓存数据文件中
                     snippet.updateCurDownloadedPoint(curReadIndex);
                 }
-                LogUtil.e(" NO:" + snippet.getNum() + " done.  curIndex " + curReadIndex + " endPoint: "+snippet.getEndPoint());
+                LogUtil.e(" NO:" + snippet.getNum() + " done.  curIndex: " + curReadIndex
+                            + " startPoint: "+ snippet.getStartPoint() + " endPoint: "+snippet.getEndPoint());
 
                 if(snippet.getEndPoint() > snippet.getDownloadedPoint()){
                     throw new IllegalStateException("Response content not read complete, retry");
@@ -381,7 +315,7 @@ final class RealTask implements Task {
             List<SnippetHelper.Snippet> downloadSnippets = snippetHelper.getDownloadedSnippets(request);
             if (downloadSnippets != null && downloadSnippets.size() > 0) {
                 for (SnippetHelper.Snippet snippet : downloadSnippets) {
-                    fileLength = snippet.getEndPoint();
+                    fileLength = snippet.getEndPoint()+1;
                     asyncSnippetList.put(snippet.getNum(), snippet);
                     LogUtil.i(snippet.toString());
                     if (snippet.getDownloadedPoint() < snippet.getEndPoint()) {
@@ -445,7 +379,7 @@ final class RealTask implements Task {
         }
 
         Headers headers = response.headers();
-        if (TextUtils.isEmpty(asyncTask.request.getFileName())) {
+        if (TextUtils.isEmpty(asyncTask.request.getFileName())) { //因为没有保存下载文件名，重新下载时必须再获取一次文件名
             synchronized (RealTask.this) {
                 if (TextUtils.isEmpty(asyncTask.request.getFileName())) {
                     //获取下载文件名
@@ -484,8 +418,10 @@ final class RealTask implements Task {
 
         if (asyncTask.snippet.getEndPoint() == 0) { //代表第一个请求,并且此时还没有取到文件长度，则处理http头部
             int threads = 1; //默认一个下载线程
-
+            //获取到文件长度后，开始回调进度
             fileLength = Long.valueOf(headers.header("Content-Length"));
+            postCallback(PROGRESS);
+
             String ranges = headers.header("Accept-Ranges");
             if (!TextUtils.isEmpty(ranges) && ranges.equalsIgnoreCase("bytes")) { //代表支持断点续传
                 threads = getTasksCount(fileLength);
@@ -540,6 +476,24 @@ final class RealTask implements Task {
         return size > originalRequest.maxDownloadThreads() ? originalRequest.maxDownloadThreads() : size;
     }
 
+    private void checkRetry(Exception e, AsyncTask asyncTask){
+        LogUtil.e(e.getMessage() + " " + asyncTask.snippet.toString() + " retryTimes:"+asyncTask.retryTimes + " ");
+        if(asyncTask.retryTimes < originalRequest.getRetryTimes()){ //重试
+            asyncTask.retryTimes++;
+            asyncTask.code = RETRYING;
+            client.dispatcher().enqueue(asyncTask);
+        }else {
+            asyncTask.code = FAIL;
+            originalRequest.code = FAIL;
+            exceptionResult = e;
+            if (asyncTaskList.size() > 0) {
+                for (AsyncTask task : asyncTaskList) {
+                    task.cancel();
+                }
+            }
+        }
+    }
+
     /**
      * 确保所有task都处理完后，post callback
      */
@@ -561,20 +515,95 @@ final class RealTask implements Task {
                             asyncSnippetList.clear();
                         }
                     }else {
-                        originalRequest.code = SUCCESS;
                         tempFileName.renameTo(new File(originalRequest.getStoragePath() + originalRequest.getFileName()));
+                        originalRequest.code = SUCCESS;
                     }
-                }
-
-                if(originalRequest.code == SUCCESS || originalRequest.code == CANCEL){
-                    snippetHelper.downloadDone(originalRequest.code, originalRequest);
-                    asyncTaskList.clear();
-                    asyncSnippetList.clear();
                 }
                 postCallback(PROGRESS);
                 postCallback(originalRequest.code);
             }
         }catch (Exception ignored){}
+    }
+
+    private boolean isAsyncThreadMode(int code){
+        return (callbackThreadMode & (1<<code))==0;
+    }
+
+    private void postCallback(int code) {
+        if (downloadListener != null) {
+            if(isAsyncThreadMode(code)){
+                client.dispatcher().postCallback(code, this);       //回调在异步线程
+            }else {
+                client.dispatcher().postMainCallback(code, this);   //回调在主线程
+            }
+        }
+    }
+
+    private void postDelayCallback(int delayMillis, int code) {
+        if (downloadListener != null) {
+            if(isAsyncThreadMode(code)) {
+                client.dispatcher().postDelayCallback(delayMillis, code, this);  //回调在异步线程
+            }else {
+                client.dispatcher().postMainDelayCallback(delayMillis, code, this);  //回调在主线程
+            }
+        }
+    }
+
+    private void removeCallback(int code) {
+        if (downloadListener != null) {
+            if(isAsyncThreadMode(code)) {
+                client.dispatcher().removeCallback(code, this);
+            }else {
+                client.dispatcher().removeMainCallback(code,this);
+            }
+        }
+    }
+
+    void handleCallback(int code) {
+        switch (code) {
+            case PROGRESS:
+                long download = 0;
+                Collection<SnippetHelper.Snippet> collection = asyncSnippetList.values();
+                for (SnippetHelper.Snippet snippet : collection) {
+                    download += (snippet.getDownloadedPoint() - snippet.getStartPoint());
+                }
+                downloadListener.onProgress(originalRequest, download, fileLength);
+                if (isExecuting()) {
+                    //间隔调度更新进度
+                    postDelayCallback(originalRequest.getProgressRate(), PROGRESS);
+                } else {
+                    //已经执行完毕，清除可能还在等待执行的回调
+                    removeCallback(PROGRESS);
+                    if(originalRequest.code == SUCCESS){
+                        snippetHelper.downloadDone(originalRequest.code, originalRequest);
+                        asyncTaskList.clear();
+                        asyncSnippetList.clear();
+                    }
+                }
+                break;
+            case START:
+                downloadListener.onStart(originalRequest);
+                break;
+            case SUCCESS:
+                downloadListener.onFinished(originalRequest);
+                break;
+            case PAUSE:
+                downloadListener.onPause(originalRequest);
+                break;
+            case RESTART:
+                downloadListener.onRestart(originalRequest);
+                break;
+            case CANCEL:
+                asyncTaskList.clear();
+                asyncSnippetList.clear();
+                snippetHelper.downloadDone(CANCEL, originalRequest);
+                Util.deleteFile(tempFileName);
+                downloadListener.onCancel(originalRequest);
+                break;
+            case FAIL:
+                downloadListener.onFailed(originalRequest, exceptionResult);
+                break;
+        }
     }
 
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * Created by nickyang on 2018/4/1.
+ * 此接口用于自定义保存文件下载中的分段记录， 默认实现了FileSnippetHelper，详情见 OkHttpEngine
  */
 
 public interface SnippetHelper {

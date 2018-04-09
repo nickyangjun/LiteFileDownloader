@@ -2,6 +2,7 @@ package com.nicky.litefiledownloader;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.support.annotation.Nullable;
@@ -44,11 +45,13 @@ public final class Dispatcher {
 
     private HandlerThread mThread;
     private Handler mAsyncHandler;
+    private Handler mMainHandler;
 
     public Dispatcher() {
         mThread = new HandlerThread("DispatcherCallback", Process.THREAD_PRIORITY_BACKGROUND);
         mThread.start();
         mAsyncHandler = new Handler(new AsyncThreadCallback());
+        mMainHandler = new Handler(Looper.getMainLooper(), new AsyncThreadCallback());
     }
 
     public synchronized ExecutorService executorService() {
@@ -158,4 +161,16 @@ public final class Dispatcher {
         mAsyncHandler.removeMessages(code, realTask);
     }
 
+    void postMainCallback(int code, RealTask realTask){
+        mMainHandler.obtainMessage(code,realTask).sendToTarget();
+    }
+
+    void postMainDelayCallback(int delayMillis, int code, RealTask realTask){
+        Message message = mMainHandler.obtainMessage(code,realTask);
+        mMainHandler.sendMessageDelayed(message, delayMillis);
+    }
+
+    void removeMainCallback(int code, RealTask realTask){
+        mMainHandler.removeMessages(code, realTask);
+    }
 }

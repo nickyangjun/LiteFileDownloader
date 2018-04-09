@@ -3,15 +3,12 @@ package com.nicky.litefiledownloader.engine;
 
 import android.support.annotation.Nullable;
 
-import com.nicky.litefiledownloader.internal.LogUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * Created by nickyang on 2018/3/29.
@@ -29,21 +26,19 @@ public class OkHttpEngine implements HttpEngine {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(CONNECT_TIME_OUT, TimeUnit.SECONDS)
                 .readTimeout(IO_TIME_OUT, TimeUnit.SECONDS)
-                .writeTimeout(IO_TIME_OUT, TimeUnit.SECONDS)
-                .addInterceptor(LogInterceptor());
+                .writeTimeout(IO_TIME_OUT, TimeUnit.SECONDS);
+//                .addInterceptor(LogInterceptor());
         mOkHttpClient = builder.build();
     }
 
-    private static HttpLoggingInterceptor LogInterceptor(){
-        return new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                LogUtil.e("Http Request  =====  ", "log: " + message);
-            }
-        }).setLevel(HttpLoggingInterceptor.Level.HEADERS);//设置打印数据的级别
-    }
-
-
+//    private static HttpLoggingInterceptor LogInterceptor(){
+//        return new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+//            @Override
+//            public void log(String message) {
+//                LogUtil.e("Http Request  =====  ", "log: " + message);
+//            }
+//        }).setLevel(HttpLoggingInterceptor.Level.HEADERS);//设置打印数据的级别
+//    }
 
     @Override
     public Call getHttpReq(String url) throws IOException {

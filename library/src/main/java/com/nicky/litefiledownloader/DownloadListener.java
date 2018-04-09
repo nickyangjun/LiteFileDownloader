@@ -6,17 +6,23 @@ package com.nicky.litefiledownloader;
 
 public interface DownloadListener {
 
-    void onStart();
+    void onStart(Request request);
 
-    void onProgress(int progress);
+    /**
+     *
+     * @param request
+     * @param curBytes   0 <= curBytes <= totalBytes
+     * @param totalBytes
+     */
+    void onProgress(Request request, long curBytes, long totalBytes);
 
-    void onPause();
+    void onPause(Request request);
 
-    void onRestart();
+    void onRestart(Request request);
 
-    void onFinished();
+    void onFinished(Request request);
 
-    void onCancel();
+    void onCancel(Request request);
 
-    void onFailed(Exception e);
+    void onFailed(Request request, Exception e);
 }

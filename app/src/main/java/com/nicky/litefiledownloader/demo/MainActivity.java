@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -21,6 +20,8 @@ import com.nicky.litefiledownloader.DownloadListener;
 import com.nicky.litefiledownloader.FileDownloader;
 import com.nicky.litefiledownloader.Request;
 import com.nicky.litefiledownloader.Task;
+import com.nicky.litefiledownloader.annotation.ExecuteMode;
+import com.nicky.litefiledownloader.annotation.ThreadMode;
 import com.nicky.litefiledownloader.internal.LogUtil;
 
 import java.util.HashMap;
@@ -111,58 +112,48 @@ public class MainActivity extends AppCompatActivity {
 
         FileDownloadListener(ProgressBar progressBar){
             this.progressBar = progressBar;
+        }
+
+        @Override
+        @ExecuteMode(threadMode = ThreadMode.MAIN)
+        public void onStart(Request request) {
+            LogUtil.e("--------> onStart");
             progressBar.setMax(100);
         }
 
         @Override
-        public void onStart() {
-            LogUtil.e("--------> onStart");
+        @ExecuteMode(threadMode = ThreadMode.MAIN)
+        public void onProgress(Request request, long curBytes, long totalBytes) {
+            int progress = (int) ((curBytes * 100 / totalBytes));
+            progressBar.setProgress(progress);
         }
 
         @Override
-        public void onProgress(final int progress) {
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setProgress(progress);
-                }
-            });
-        }
-
-        @Override
-        public void onPause() {
+        public void onPause(Request request) {
             LogUtil.e("--------> onPause");
         }
 
         @Override
-        public void onRestart() {
+        public void onRestart(Request request) {
             LogUtil.e("--------> onRestart");
         }
 
         @Override
-        public void onFinished() {
+        @ExecuteMode(threadMode = ThreadMode.MAIN)
+        public void onFinished(Request request) {
             LogUtil.e("--------> onFinished");
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setProgress(100);
-                }
-            });
+            progressBar.setProgress(100);
         }
 
         @Override
-        public void onCancel() {
+        @ExecuteMode(threadMode = ThreadMode.MAIN)
+        public void onCancel(Request request) {
             LogUtil.e("--------> onCancel");
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setProgress(0);
-                }
-            });
+            progressBar.setProgress(0);
         }
 
         @Override
-        public void onFailed(Exception e) {
+        public void onFailed(Request request, Exception e) {
             LogUtil.e(e.getMessage() + Log.getStackTraceString(e));
         }
     }

@@ -15,6 +15,12 @@ public interface Task {
     void enqueue(DownloadListener listener);
 
     /**
+     * 是否执行过，包括正在执行和取消执行的请求
+     * @return
+     */
+    boolean isExecuted();
+
+    /**
      * 是否正在执行
      * @return
      */

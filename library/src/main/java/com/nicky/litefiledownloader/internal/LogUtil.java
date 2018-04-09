@@ -18,6 +18,10 @@ public class LogUtil {
     private LogUtil() {
     }
 
+    public void onLoggable(){
+        isLoggable = true;
+    }
+
     private static boolean isLoggable() {
         return BuildConfig.DEBUG || isLoggable;
     }
