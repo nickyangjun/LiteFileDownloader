@@ -23,12 +23,20 @@ public class OkHttpEngine implements HttpEngine {
     private static final int IO_TIME_OUT = 30;
 
     public OkHttpEngine(){
+        mOkHttpClient = getOkHttpClient();
+    }
+
+    /**
+     * 可以重载此方法，提供自己的OkHttpClient
+     * @return
+     */
+    protected OkHttpClient getOkHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(CONNECT_TIME_OUT, TimeUnit.SECONDS)
                 .readTimeout(IO_TIME_OUT, TimeUnit.SECONDS)
                 .writeTimeout(IO_TIME_OUT, TimeUnit.SECONDS);
 //                .addInterceptor(LogInterceptor());
-        mOkHttpClient = builder.build();
+        return builder.build();
     }
 
 //    private static HttpLoggingInterceptor LogInterceptor(){
