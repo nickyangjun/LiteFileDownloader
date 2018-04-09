@@ -43,10 +43,6 @@ public class MainActivity extends AppCompatActivity {
     Button cancelButton;
     @BindView(R.id.progressBar)
     ProgressBar progressBar;
-    @BindView(R.id.btn_batch_start)
-    Button batchStart;
-    @BindView(R.id.btn_batch_stop)
-    Button batchStop;
     @BindView(R.id.recycler)
     RecyclerView recyclerView;
 
@@ -68,9 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void initView(){
         addressText.setText("http://download.xianliao.updrips.com/apk/xianliao.apk");
-//        addressText.setText("http://chatfile.updrips.com/1522398701156_10002_90000005172_8Efxdd.png");
-//        addressText.setText("http://download.chinaunix.net/down.php?id=10608&ResourceID=5267&site=1");
-//        addressText.setText("https://gw.alipayobjects.com/os/rmsportal/cTiZiJcYfqAncwCPxKob.zip");
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new DownloadAdapter());
@@ -111,6 +104,12 @@ public class MainActivity extends AppCompatActivity {
         ProgressBar progressBar;
 
         FileDownloadListener(ProgressBar progressBar){
+            this.progressBar = progressBar;
+        }
+
+        FileDownloadListener(){}
+
+        public void setProgressBar(ProgressBar progressBar) {
             this.progressBar = progressBar;
         }
 
@@ -160,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private class DownloadAdapter extends RecyclerView.Adapter<Holder>{
-        Map<Integer, RequestCase> requestCaseMap = new HashMap<>(Constants.downloadUrls.length);
+        Map<Integer, TaskCase> requestCaseMap = new HashMap<>(Constants.downloadUrls.length);
 
         @Override
         public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -170,22 +169,30 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final Holder holder, int position) {
-            RequestCase requestCase = requestCaseMap.get(position);
-            if(requestCase == null) {
+            TaskCase taskCase = requestCaseMap.get(position);
+            if(taskCase == null) {
                 String url = Constants.downloadUrls[position];
                 holder.text.setText(url);
                 Request request = Request.createBuilder().url(url).build();
-                requestCase = new RequestCase();
-                requestCase.request = request;
-                requestCaseMap.put(position, requestCase);
+                Task task = downloader.newTask(request);
+                taskCase = new TaskCase();
+                taskCase.task = task;
+                taskCase.listener = new FileDownloadListener();
+                requestCaseMap.put(position, taskCase);
             }
 
-            final Task task = downloader.newTask(requestCase.request);
+            final Task task = taskCase.task;
+            final DownloadListener listener = taskCase.listener;
+            taskCase.listener.setProgressBar(holder.progressBar);
+
+            if(task.isExecuting()){
+                holder.startBtn.setText("暂停");
+            }
             holder.startBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if(holder.startBtn.getText().equals("开始")){
-                        task.enqueue(new FileDownloadListener(holder.progressBar));
+                        task.enqueue(listener);
                         holder.startBtn.setText("暂停");
                     }else if(holder.startBtn.getText().equals("暂停")){
                         task.pause();
@@ -212,9 +219,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class RequestCase{
-        Request request;
-        int progres;
+    private class TaskCase{
+        Task task;
+        FileDownloadListener listener;
     }
 
     private class Holder extends RecyclerView.ViewHolder {
