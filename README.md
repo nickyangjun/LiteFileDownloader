@@ -1,5 +1,5 @@
 # LiteFileDownloader
-File Downloader,  Simple is the highest. Lightweight, easy to extend
+File Downloader,  Simple is the highest. Fastest, lightweight, easy to extend
 
 ## Download
 
@@ -52,8 +52,7 @@ Step 2. start a request
 ```java
     Request request = Request
                 .createBuilder()
-                .maxDownloadThreads(1)
-                .url(addressText.getText().toString())
+                .url("url")
                 .build();
     Task task = downloader.newTask(request);
     task.enqueue(new DownloadListener() {
@@ -88,4 +87,6 @@ Step 2. start a request
     });
 ```
 
-if you want the DownloadListener callbck in Android Main thread, please use the annotation of ExecuteMode.
+If you want the DownloadListener to callbck in Android Main thread, please use the annotation of ExecuteMode.
+
+enjoy yourself.
