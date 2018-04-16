@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">LiteFileDownloader</string>
+    <string name="title_activity_file_io">FileIOActivity</string>
 </resources>

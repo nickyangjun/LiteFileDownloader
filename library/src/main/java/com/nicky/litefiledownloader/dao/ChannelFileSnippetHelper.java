@@ -7,6 +7,7 @@ import com.nicky.litefiledownloader.internal.binary.MD5Utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * 通过RandomAccessFile来保存各个下载分段记录
  */
 
-public class FileSnippetHelper implements SnippetHelper {
+public class ChannelFileSnippetHelper implements SnippetHelper {
 
     @Override
     public Snippet getSnippet(Request request, int num, long startPoint, long endPoint, long downloadedPoint) {
@@ -69,7 +70,8 @@ public class FileSnippetHelper implements SnippetHelper {
         long downloadedPoint;
         RandomAccessFile cacheAccessFile;
         long seekPoint;
-        byte point[] = new byte[8];
+        FileChannel cacheFileChannels;
+        java.nio.ByteBuffer buffers;
 
         FileSnippet(Request request, int num, long startPoint, long endPoint, long downloadedPoint) {
             this.request = request;
@@ -113,49 +115,54 @@ public class FileSnippetHelper implements SnippetHelper {
         @Override
         public void updateCurDownloadedPoint(long downloadedPoint) throws IOException {
             this.downloadedPoint = downloadedPoint;
-            cacheAccessFile.seek(seekPoint);
-            cacheAccessFile.write(writeLong(point, 0, downloadedPoint));
+            cacheFileChannels.position(seekPoint);
+            buffers.clear();
+            buffers.putLong(downloadedPoint);
+            buffers.flip();
+            cacheFileChannels.write(buffers);
+
+//            LogUtil.e(" ----> 分段下载: startPoint: " + startPoint + "  endPoint: " + endPoint + " downloadedPoint: "
+//                    + downloadedPoint);
         }
 
         @Override
         public void startDownload() throws IOException {
-            if (cacheAccessFile == null) {
-                cacheAccessFile = new RandomAccessFile(getCacheFilePath(request), "rwd");
-            }
+            initCacheFile();
         }
 
         @Override
         public void stopDownload() {
+            buffers.clear();
+            Util.close(cacheFileChannels);
             Util.close(cacheAccessFile);
             cacheAccessFile = null;
         }
 
-        @Override
-        public void serializeToLocal() throws IOException {
+        private void initCacheFile() throws IOException {
             if (cacheAccessFile == null) {
                 cacheAccessFile = new RandomAccessFile(getCacheFilePath(request), "rwd");
+                cacheFileChannels = cacheAccessFile.getChannel();
+                buffers = java.nio.ByteBuffer.allocate(8);
             }
-
-            //定位到自己的位置
-            cacheAccessFile.seek(num * 24);
-
-            byte data[] = new byte[24];
-            writeLong(data, 0, startPoint);
-            writeLong(data, 8, endPoint);
-            writeLong(data, 16, downloadedPoint);
-            cacheAccessFile.write(data);
         }
 
-        private byte[] writeLong(byte[] bytes, int i, long data) {
-            bytes[i] = (byte) ((data >>> 56) & 0xFF);
-            bytes[i + 1] = (byte) ((data >>> 48) & 0xFF);
-            bytes[i + 2] = (byte) ((data >>> 40) & 0xFF);
-            bytes[i + 3] = (byte) ((data >>> 32) & 0xFF);
-            bytes[i + 4] = (byte) ((data >>> 24) & 0xFF);
-            bytes[i + 5] = (byte) ((data >>> 16) & 0xFF);
-            bytes[i + 6] = (byte) ((data >>> 8) & 0xFF);
-            bytes[i + 7] = (byte) (data & 0xFF);
-            return bytes;
+        @Override
+        public void serializeToLocal() throws IOException {
+            initCacheFile();
+            //定位到自己的位置
+            cacheFileChannels.position(num * 24);
+            buffers.putLong(startPoint);
+            buffers.flip();
+            cacheFileChannels.write(buffers);
+            buffers.clear();
+            buffers.putLong(endPoint);
+            buffers.flip();
+            cacheFileChannels.write(buffers);
+            buffers.clear();
+            buffers.putLong(downloadedPoint);
+            buffers.flip();
+            cacheFileChannels.write(buffers);
+            buffers.clear();
         }
 
         @Override

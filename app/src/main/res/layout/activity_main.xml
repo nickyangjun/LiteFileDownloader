@@ -1,101 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.nicky.litefiledownloader.demo.MainActivity"
-    tools:layout_editor_absoluteY="81dp">
+    android:orientation="vertical">
 
     <Button
-        android:id="@+id/btn_start"
+        android:id="@+id/file_test_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:text="开始"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline"/>
+        android:text="FileTest"/>
 
-    <Button
-        android:id="@+id/btn_pause"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:text="暂停"
-        app:layout_constraintEnd_toStartOf="@+id/btn_cancel"
-        app:layout_constraintStart_toEndOf="@+id/btn_start"
-        app:layout_constraintTop_toTopOf="@+id/guideline"/>
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btn_cancel"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/tv_addr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="下载地址:"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textSize="14sp"
+            tools:layout_editor_absoluteY="151dp"/>
+
+        <TextView
+            android:id="@+id/et_addr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Name"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="4dp"
-        android:text="取消"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline"/>
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="开始"/>
+
+        <Button
+            android:id="@+id/btn_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="暂停"/>
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="取消"/>
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="368dp"
-        android:layout_height="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_pause"/>
+        android:layout_width="match_parent"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_height="4dp"/>
 
-    <TextView
-        android:id="@+id/tv_addr"
-        android:layout_width="wrap_content"
-        android:layout_height="38dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:text="下载地址"
-        android:textAppearance="@style/TextAppearance.AppCompat.Title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
 
-    <TextView
-        android:id="@+id/et_addr"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tv_addr"
-        app:layout_constraintTop_toTopOf="parent"/>
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/tv_addr1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="下载地址:"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textSize="14sp"
+            tools:layout_editor_absoluteY="151dp"/>
+
+        <TextView
+            android:id="@+id/et_addr1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Name"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="54dp"/>
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_start1"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="开始"/>
+
+        <Button
+            android:id="@+id/btn_pause1"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="暂停"/>
+
+        <Button
+            android:id="@+id/btn_cancel1"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="取消"/>
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar1"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_height="4dp"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_addr2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="下载地址:"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textSize="14sp"
+            tools:layout_editor_absoluteY="151dp"/>
+
+        <TextView
+            android:id="@+id/et_addr2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Name"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_start2"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="开始"/>
+
+        <Button
+            android:id="@+id/btn_pause2"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="暂停"/>
+
+        <Button
+            android:id="@+id/btn_cancel2"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:text="取消"/>
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar2"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_height="4dp"/>
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler"
-        android:layout_width="0dp"
-        android:layout_height="377dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progressBar"
-        app:layout_constraintVertical_bias="1.0"/>
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

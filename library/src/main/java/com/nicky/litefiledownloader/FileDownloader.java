@@ -2,6 +2,8 @@ package com.nicky.litefiledownloader;
 
 import android.os.Environment;
 
+import com.nicky.litefiledownloader.dao.CodecFactory;
+import com.nicky.litefiledownloader.dao.DefaultCodecFactory;
 import com.nicky.litefiledownloader.dao.FileSnippetHelper;
 import com.nicky.litefiledownloader.dao.SnippetHelper;
 import com.nicky.litefiledownloader.engine.HttpEngine;
@@ -14,9 +16,10 @@ import java.io.File;
  */
 
 public class FileDownloader {
-    private static final int DEFAULT_MAX_THREADS = 4;
+    // TODO: 2018/4/16 目前默认单线程下载，由于网速低于1M时，下载速度取决于网速，当网速快时，下载速度取决于IO性能，多线程写文件还没有单线程快
+    private static final int DEFAULT_TASK_MAX_THREADS = 1; //单个下载任务默认单线程
     private static final String DEFAULT_FILE_DIR;  //默认下载目录
-    private static final int DEFAULT_PROGRESS_RATE = 300; //默认300MS更新一次进度
+    private static final int DEFAULT_PROGRESS_RATE = 200; //默认300MS更新一次进度
     private static final int DEFAULT_RETRY_TIMES = 2; //默认重试2次
 
     static {
@@ -35,13 +38,14 @@ public class FileDownloader {
     final HttpEngine engine;
     final SnippetHelper snippetHelper;
     final int retryTimes;
+    final CodecFactory codecFactory;
 
     /**
      * 获取默认下载目录
      *
      * @return
      */
-    private String getDefaultDirectory() {
+    public String getDefaultDirectory() {
         return DEFAULT_FILE_DIR;
     }
 
@@ -50,7 +54,7 @@ public class FileDownloader {
     }
 
     public Task newTask(Request request){
-       return new RealTask(this, engine, snippetHelper, request);
+       return new RealTask(this, engine, codecFactory.createCodec(), snippetHelper, request);
     }
 
     FileDownloader(Builder builder){
@@ -61,6 +65,7 @@ public class FileDownloader {
         snippetHelper = builder.snippetHelper;
         progressRate = builder.progressRate;
         retryTimes = builder.retryTimes;
+        codecFactory = builder.codecFactory;
     }
 
     public static class Builder{
@@ -71,15 +76,17 @@ public class FileDownloader {
         HttpEngine engine;
         SnippetHelper snippetHelper;
         int retryTimes;
+        CodecFactory codecFactory;
 
         public Builder(){
             dispatcher = new Dispatcher();
-            maxThreadPerTask = DEFAULT_MAX_THREADS;
+            maxThreadPerTask = DEFAULT_TASK_MAX_THREADS;
             downloadFileDir = DEFAULT_FILE_DIR;
             progressRate = DEFAULT_PROGRESS_RATE;
             engine = new OkHttpEngine();
             snippetHelper = new FileSnippetHelper();
             retryTimes = DEFAULT_RETRY_TIMES;
+            codecFactory = new DefaultCodecFactory();
         }
 
         public Builder downloadFileDirectory(String pathDir){
@@ -109,6 +116,11 @@ public class FileDownloader {
 
         public Builder retryTimes(int retryTimes){
             this.retryTimes = retryTimes;
+            return this;
+        }
+
+        public Builder codecFactory(CodecFactory factory){
+            this.codecFactory = factory;
             return this;
         }
 

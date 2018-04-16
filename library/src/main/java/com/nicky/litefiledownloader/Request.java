@@ -1,5 +1,7 @@
 package com.nicky.litefiledownloader;
 
+import java.io.File;
+
 /**
  * Created by nickyang on 2018/3/29.
  *
@@ -96,6 +98,9 @@ public final class Request {
 
         public Builder storagePathDir(String storageDirPath) {
             storagePath = storageDirPath;
+            if(!storageDirPath.endsWith(File.separator)){
+                storagePath = storagePath+File.separator;
+            }
             return this;
         }
 
@@ -126,5 +131,15 @@ public final class Request {
 
     public static Builder createBuilder() {
         return new Builder();
+    }
+
+    @Override
+    public String toString() {
+        return "Request[ reqUrl: "
+                + reqUrl + " maxThreads: "
+                + maxThreads+" storagePath: "
+                + storagePath + " fileName: "+
+                fileName+
+                "]";
     }
 }
