@@ -89,4 +89,6 @@ Step 2. start a request
 
 If you want the DownloadListener to callbck in Android Main thread, please use the annotation of ExecuteMode.
 
-enjoy yourself.
+**note:** LiteFileDownloader use Okhttp to download file by default, so you need add Okhttp library in your build.gradle. you also can Implementing the HttpEngine interface as yourself download Engine.
+
+**enjoy yourself.**
