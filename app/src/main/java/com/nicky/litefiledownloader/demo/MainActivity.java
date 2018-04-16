@@ -89,7 +89,10 @@ public class MainActivity extends AppCompatActivity {
 
         initView();
 
-        downloader = FileDownloader.createBuilder().maxThreadPerTask(4).build();
+        downloader = FileDownloader
+                .createBuilder()
+                .build();
+
         downloader2 = FileDownloader.createBuilder()
                 .codecFactory(new CodecFactory() {
             @Override
