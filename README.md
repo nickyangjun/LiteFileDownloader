@@ -1,5 +1,5 @@
 # LiteFileDownloader
-File Downloader,  Simple is the highest. Fastest, lightweight, easy to extend
+File Downloader,  Simple is the highest. Fastest、Lightweight、MultiThread、Flexible、easy to extend
 
 ## Download
 
