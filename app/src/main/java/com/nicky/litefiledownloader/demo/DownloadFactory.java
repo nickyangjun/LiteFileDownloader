@@ -3,17 +3,13 @@ package com.nicky.litefiledownloader.demo;
 import com.nicky.litefiledownloader.DownloadListener;
 import com.nicky.litefiledownloader.FileDownloader;
 import com.nicky.litefiledownloader.Task;
-import com.nicky.litefiledownloader.dao.BufferRandomAccessFileCodec;
-import com.nicky.litefiledownloader.dao.SnippetHelper;
 import com.nicky.litefiledownloader.engine.OkHttpEngine;
 import com.nicky.litefiledownloader.internal.LogUtil;
 import com.nicky.litefiledownloader.internal.Util;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;

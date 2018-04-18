@@ -50,7 +50,7 @@ public final class Dispatcher {
     public Dispatcher() {
         mThread = new HandlerThread("DispatcherCallback", Process.THREAD_PRIORITY_BACKGROUND);
         mThread.start();
-        mAsyncHandler = new Handler(new AsyncThreadCallback());
+        mAsyncHandler = new Handler(mThread.getLooper(), new AsyncThreadCallback());
         mMainHandler = new Handler(Looper.getMainLooper(), new AsyncThreadCallback());
     }
 

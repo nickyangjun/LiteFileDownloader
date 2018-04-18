@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         @ExecuteMode(threadMode = ThreadMode.MAIN)
         public void onStart(Request request) {
-            LogUtil.e("--------> onStart "+request.getReqUrl());
+            LogUtil.e("--------> onStart "+request.getReqUrl() + Thread.currentThread().getId());
             start = System.currentTimeMillis();
             progressBar.setMax(100);
         }
