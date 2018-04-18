@@ -18,7 +18,7 @@ Step 1. Add the JitPack repository to your build file Add it in your root build.
 Step 2. Add the dependency
 ```
     dependencies {
-            compile 'com.github.nickyangjun:LiteFileDownloader:v1.0.3'
+            compile 'com.github.nickyangjun:LiteFileDownloader:1.0.3'
     }
 ```
 
@@ -34,7 +34,7 @@ Or Maven:
     <dependency>
         <groupId>com.github.nickyangjun</groupId>
         <artifactId>LiteFileDownloader</artifactId>
-        <version>v1.0.3</version>
+        <version>1.0.3</version>
     </dependency>
 ```
 
@@ -87,7 +87,7 @@ Step 2. start a request
     });
 ```
 
-If you want the DownloadListener to callbck in Android Main thread, please use the annotation of ExecuteMode.
+If you want the DownloadListener to callbck in Android Main thread, please use the annotation of ExecuteMode. The default dowload directory is "/sdcard/fileDownload". 
 
 **note:** LiteFileDownloader use Okhttp to download file by default, so you need add Okhttp library in your build.gradle. you also can Implementing the HttpEngine interface as yourself download Engine.
 
