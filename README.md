@@ -18,7 +18,7 @@ Step 1. Add the JitPack repository to your build file Add it in your root build.
 Step 2. Add the dependency
 ```
     dependencies {
-            compile 'com.github.nickyangjun:LiteFileDownloader:1.0.3'
+            compile 'com.github.nickyangjun:LiteFileDownloader:1.0.4'
     }
 ```
 
@@ -34,7 +34,7 @@ Or Maven:
     <dependency>
         <groupId>com.github.nickyangjun</groupId>
         <artifactId>LiteFileDownloader</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </dependency>
 ```
 
