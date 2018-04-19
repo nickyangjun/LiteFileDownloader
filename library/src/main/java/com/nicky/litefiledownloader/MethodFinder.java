@@ -24,63 +24,92 @@ public class MethodFinder {
     private static final Map<Class<? extends DownloadListener>, Integer> METHOD_CACHE = new ConcurrentHashMap<>();
 
     /**
-     * 获取 DownloadListener method 执行线程
+     * find the method of DownloadListener execute thread
+     *
      * @param listenerClass
      * @return
      */
-    static int findListenerMethods(Class<? extends DownloadListener> listenerClass){
+    static int findListenerMethods(Class<? extends DownloadListener> listenerClass) {
         int threadMode = 0;
         Integer methodMode = METHOD_CACHE.get(listenerClass);
-        if(methodMode == null){
+        if (methodMode == null) {
+            Method method;
+            ExecuteMode mode;
+
             try {
-                Method method = listenerClass.getDeclaredMethod("onStart", new Class<?>[]{Request.class});
-                ExecuteMode mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
+                method = listenerClass.getDeclaredMethod("onStart", new Class<?>[]{Request.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
                     threadMode |= 1 << START;
                 }
-
-                method = listenerClass.getDeclaredMethod("onProgress", new Class[]{Request.class, long.class, long.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << PROGRESS;
-                }
-
-                method = listenerClass.getDeclaredMethod("onPause", new Class<?>[]{Request.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << PAUSE;
-                }
-
-                method = listenerClass.getDeclaredMethod("onRestart", new Class<?>[]{Request.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << RESTART;
-                }
-
-                method = listenerClass.getDeclaredMethod("onFinished", new Class<?>[]{Request.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << SUCCESS;
-                }
-
-                method = listenerClass.getDeclaredMethod("onCancel", new Class<?>[]{Request.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << CANCEL;
-                }
-
-                method = listenerClass.getDeclaredMethod("onFailed", new Class<?>[]{Request.class, Exception.class});
-                mode = method.getAnnotation(ExecuteMode.class);
-                if(mode != null && mode.threadMode() == ThreadMode.MAIN){
-                    threadMode |= 1 << FAIL;
-                }
-
-                methodMode = threadMode;
-                METHOD_CACHE.put(listenerClass,methodMode);
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             }
-        }else {
+
+            try {
+                method = listenerClass.getDeclaredMethod("onProgress", new Class[]{Request.class, long.class, long.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << PROGRESS;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                method = listenerClass.getDeclaredMethod("onPause", new Class<?>[]{Request.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << PAUSE;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                method = listenerClass.getDeclaredMethod("onRestart", new Class<?>[]{Request.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << RESTART;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                method = listenerClass.getDeclaredMethod("onFinished", new Class<?>[]{Request.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << SUCCESS;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                method = listenerClass.getDeclaredMethod("onCancel", new Class<?>[]{Request.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << CANCEL;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                method = listenerClass.getDeclaredMethod("onFailed", new Class<?>[]{Request.class, Exception.class});
+                mode = method.getAnnotation(ExecuteMode.class);
+                if (mode != null && mode.threadMode() == ThreadMode.MAIN) {
+                    threadMode |= 1 << FAIL;
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            methodMode = threadMode;
+            METHOD_CACHE.put(listenerClass, methodMode);
+
+        } else {
             threadMode = methodMode;
         }
 

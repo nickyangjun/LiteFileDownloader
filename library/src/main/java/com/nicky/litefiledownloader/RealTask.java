@@ -39,8 +39,8 @@ final class RealTask implements Task {
     final static int PAUSE = 3;   //下载暂停
     final static int RESTART = 4;   //重新启动下载
     final static int FAIL = 5;   //下载失败
-    final static int PROGRESS = 6;   //下载进度更新
-    private final static int RETRYING = 7;   //下载进度更新
+    final static int PROGRESS = 6;   //update progress
+    private final static int RETRYING = 7;   //retry
 
     private static final long MIN_PAGE_BYTES = 32 * 1024; //大于32K才开始断点分页下载
     private final FileDownloader client;
@@ -484,12 +484,12 @@ final class RealTask implements Task {
         return size > originalRequest.maxDownloadThreads() ? originalRequest.maxDownloadThreads() : size;
     }
 
-    private void checkRetry(Exception e, AsyncTask asyncTask){
+    private void checkRetry(Exception e, final AsyncTask asyncTask){
         LogUtil.e(e.getMessage() + " " + asyncTask.snippet.toString() + " retryTimes:"+asyncTask.retryTimes + " ");
         if(asyncTask.retryTimes < originalRequest.getRetryTimes()){ //重试
             asyncTask.retryTimes++;
             asyncTask.code = RETRYING;
-            client.dispatcher().enqueue(asyncTask);
+            client.dispatcher().enqueue(asyncTask, asyncTask.retryTimes*1000);
         }else {
             asyncTask.code = FAIL;
             originalRequest.code = FAIL;

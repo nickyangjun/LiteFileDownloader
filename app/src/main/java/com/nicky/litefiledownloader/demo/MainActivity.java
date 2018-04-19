@@ -269,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onFailed(Request request, Exception e) {
+            LogUtil.e("--------> onFailed");
             LogUtil.e( request.getReqUrl()+" "+e.getMessage() +"\n"+ Log.getStackTraceString(e));
         }
     }

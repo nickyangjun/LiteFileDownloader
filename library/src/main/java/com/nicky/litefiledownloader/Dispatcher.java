@@ -80,6 +80,15 @@ public final class Dispatcher {
         }
     }
 
+    void enqueue(final RealTask.AsyncTask task, long delayMillis){
+        mAsyncHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                enqueue(task);
+            }
+        },delayMillis);
+    }
+
     public synchronized void setMaxRequests(int maxRequests) {
         if (maxRequests < 1) {
             throw new IllegalArgumentException("max < 1: " + maxRequests);
