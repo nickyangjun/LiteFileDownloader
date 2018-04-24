@@ -1,5 +1,7 @@
 package com.nicky.litefiledownloader;
 
+import android.support.annotation.Nullable;
+
 import java.io.File;
 
 /**
@@ -57,6 +59,11 @@ public final class Request {
 
     public int getRetryTimes() {
         return retryTimes;
+    }
+
+    @Nullable
+    public String getContentMd5(){
+        return contentMd5;
     }
 
     public Object getTag(){

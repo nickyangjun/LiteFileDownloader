@@ -91,4 +91,13 @@ If you want the DownloadListener to callbck in Android Main thread, please use t
 
 **note:** LiteFileDownloader use Okhttp to download file by default, so you need add Okhttp library in your build.gradle. you also can Implementing the HttpEngine interface as yourself download Engine.
 
+## Proguard
+
+```
+# liteFiledDownloader
+-keepattributes *Annotation*
+-keep class * implements com.nicky.litefiledownloader.DownloadListener{*;}
+-keep class com.nicky.litefiledownloader.annotation.** { *; }
+```
+
 **enjoy yourself.**

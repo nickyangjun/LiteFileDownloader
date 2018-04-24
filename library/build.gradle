@@ -57,6 +57,16 @@ artifacts {
     archives javadocJar
 }
 
+task makeJar(type: Copy) {
+    delete "libs/"+"LiteFileDownloader.jar"
+    from('build/intermediates/bundles/release/')
+    into('libs/')
+    include('classes.jar')
+    rename ('classes.jar', "LiteFileDownloader.jar")
+}
+
+makeJar.dependsOn(build)
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
